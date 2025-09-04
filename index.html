@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Checador de Asistencia</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f4f4f9; }
+    button { padding: 12px 24px; font-size: 16px; margin: 10px; border: none; border-radius: 8px; background: #4CAF50; color: white; cursor: pointer; }
+    button:hover { background: #45a049; }
+    .card { border: 1px solid #ccc; border-radius: 10px; padding: 20px; margin-top: 20px; background: white; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); text-align: left; }
+    input { padding: 10px; border-radius: 6px; border: 1px solid #ccc; width: 250px; }
+  </style>
+</head>
+<body>
+  <h1>📍 Checador de Asistencia</h1>
+  <p>Ingresa tu nombre y registra tu asistencia</p>
+
+  <input type="text" id="docente" placeholder="Ejemplo: Juan Pérez"><br><br>
+  <button onclick="registrar('inicio')">▶️ Iniciar Clase / Jornada</button>
+  <button onclick="registrar('fin')">⏹️ Finalizar Clase / Jornada</button>
+
+  <div id="resultado" class="card"></div>
+
+  <!-- Importar Firebase -->
+  <script type="module">
+    // Importar SDKs de Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+   // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyA19-yYA8kjgve8uYMzzMSnKRIrF0HpH2U",
+  authDomain: "asistencia-8eaaa.firebaseapp.com",
+  projectId: "asistencia-8eaaa",
+  storageBucket: "asistencia-8eaaa.firebasestorage.app",
+  messagingSenderId: "256470315420",
+  appId: "1:256470315420:web:f3fd1500de951133821859",
+  measurementId: "G-GQXHXJXFRX"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+ // Inicializar Firebase y Firestore
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Ejemplo de horarios
+    const horarios = {
+      "Juan Pérez": { "lunes": "Matemáticas 9:00-10:00 Aula 3", "jueves": "Física 10:15-11:00 Aula 2" },
+      "María López": { "lunes": "Historia 11:00-12:00 Aula 1", "martes": "Español 8:00-9:00 Aula 5" }
+    };
+
+    async function registrar(tipo) {
+      const docente = document.getElementById("docente").value.trim();
+      if (!docente) {
+        alert("Por favor escribe tu nombre");
+        return;
+      }
+
+      if (!navigator.geolocation) {
+        alert("Tu navegador no soporta geolocalización");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(async pos => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+
+        const hoy = new Date();
+        const fecha = hoy.toISOString().split("T")[0];
+        const hora = hoy.toLocaleTimeString("es-ES");
+        const diaSemana = hoy.toLocaleDateString("es-ES", { weekday: "long" }).toLowerCase();
+        const clase = horarios[docente]?.[diaSemana] || "Jornada / Sin clase asignada";
+
+        // Guardar en Firestore
+        await addDoc(collection(db, "asistencias"), {
+          docente,
+          tipo,
+          fecha,
+          hora,
+          clase,
+          lat,
+          lon
+        });
+
+        // Mostrar confirmación
+        document.getElementById("resultado").innerHTML += `
+          <p>
+            ${tipo === 'inicio' ? "✅ Clase/Jornada iniciada" : "⏹️ Clase/Jornada finalizada"}<br>
+            👨‍🏫 Docente: <b>${docente}</b><br>
+            📅 Fecha: ${fecha} (${diaSemana})<br>
+            🕒 Hora: ${hora}<br>
+            📍 Ubicación: ${lat.toFixed(4)}, ${lon.toFixed(4)}<br>
+            📚 Clase: ${clase}
+          </p>
+          <hr>
+        `;
+      }, () => {
+        alert("No se pudo obtener la ubicación");
+      });
+    }
+
+    // Exponer función al HTML
+    window.registrar = registrar;
+  </script>
+</body>
+</html>
