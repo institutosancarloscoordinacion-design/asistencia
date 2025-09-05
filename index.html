@@ -202,6 +202,7 @@
         const SCHOOL_LAT = 19.560137;
         const SCHOOL_LON = -97.238952;
         const MAX_DISTANCE_KM = 0.15;
+        const ADMIN_PASSWORD = "IEC25#";
 
         const horarios = {
             "Coral Alejandra Landa Hernández": {
@@ -534,10 +535,17 @@
         }
 
         function toggleAdminPanel() {
+             const password = prompt("Por favor, ingresa la contraseña de administrador:");
+            
+            if (password === ADMIN_PASSWORD) {
             if (adminContainer.style.display === "block") {
                 adminContainer.style.display = "none";
             } else {
                 adminContainer.style.display = "block";
+                displayRecordsInTable();
+                }
+            } else {
+                alert("Contraseña incorrecta. Acceso denegado.");
             }
         }
 
@@ -569,6 +577,7 @@
 </body>
 
 </html>
+
 
 
 
