@@ -1,210 +1,220 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instituto Educativo San Carlos</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Registro de Asistencia - San Carlos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <style>
-        body {  
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;  
-            text-align: center;  
-            padding: 20px;  
-            background-color: #f4f7f6;
-            color: #333;
+        :root {
+            --bg-1: #0f172a;
+            --card-bg: rgba(15, 23, 42, 0.7);
+            --accent: #0ea5a3;
+            --text-light: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --success: #28a745;
+            --danger: #dc3545;
+            --info: #17a2b8;
+            --primary: #007bff;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
             margin: 0;
-        }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-        h1 {  
-            color: #2c3e50;  
-            margin-bottom: 30px;
+            font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+            background: linear-gradient(135deg, #071126 0%, #0d3b4b 50%, #062031 100%);
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            color: var(--text-light);
         }
-        h1 .logo-img {
-            height: 105px;
-            vertical-align: middle;
-            margin-right: 10px;
+
+        .wrapper { width: 100%; max-width: 1120px; padding: 32px; }
+        .grid { display: grid; grid-template-columns: 1fr 420px; gap: 48px; align-items: center; }
+        .left { color: rgba(255, 255, 255, 0.95); }
+        .brand { display: flex; gap: 16px; align-items: center; }
+        .logo { width: 64px; height: 64px; border-radius: 12px; background: linear-gradient(135deg, var(--accent), #0369a1); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 20px; overflow: hidden;} /* Añadido overflow: hidden para el logo */
+        .logo img { height: 100%; width: 100%; object-fit: contain; } /* Estilos para la imagen del logo */
+        h1 { font-size: 28px; margin: 16px 0; }
+        p.lead { color: rgba(255, 255, 255, 0.8); line-height: 1.6; }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 28px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 6px 30px rgba(2, 6, 23, 0.6);
+            border: 1px solid var(--border-color);
         }
-        label {
-            font-size: 1.1em;
-            margin-bottom: 8px;
-            display: block;
-            font-weight: 600;
-        }
+
+        label { font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 6px; }
         input[type="text"] {
-            padding: 12px;
-            font-size: 16px;
-            border: 1px solid #ccc;
+            width: 100%;
+            padding: 12px 14px;
             border-radius: 8px;
-            width: calc(100% - 24px);
-            max-width: 300px;
-            margin-bottom: 20px;
-            transition: border-color 0.3s ease;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-light);
+            outline: none;
+            font-size: 14px;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
         input[type="text"]:focus {
-            border-color: #007bff;
-            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(14, 165, 163, 0.3);
         }
-        .button-group {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 20px;
-            margin-bottom: 30px;
+
+        .button-group { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 12px 25px; font-size: 16px; border: none; border-radius: 8px;
+            cursor: pointer; transition: background-color 0.3s, transform 0.2s;
+            color: white; font-weight: 600;
         }
-        button {
-            padding: 12px 25px;
-            font-size: 17px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            color: white;
-            font-weight: 600;
-        }
-        button.start { background-color: #28a745; }
-        button.start:hover { background-color: #218838; transform: translateY(-2px); }
-        button.end { background-color: #dc3545; }
-        button.end:hover { background-color: #c82333; transform: translateY(-2px); }
-        button.admin { background-color: #17a2b8; }
-        button.admin:hover { background-color: #138496; transform: translateY(-2px); }
-        button.download { background-color: #007bff; }
-        button.download:hover { background-color: #0069d9; transform: translateY(-2px); }
-        button:disabled { background-color: #cccccc; cursor: not-allowed; }
-        .card {  
-            border: 1px solid #e0e0e0;  
-            border-radius: 12px;  
-            padding: 25px;  
-            margin-top: 25px;  
-            background-color: #f9f9f9;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            text-align: left;
-        }
-        .card h2 {
-            color: #007bff;
-            margin-top: 0;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #e0e0e0;
-            padding-bottom: 10px;
-        }
-        .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
+        .btn:hover { transform: translateY(-2px); }
+
+        .btn.start { background-color: var(--success); }
+        .btn.start:hover { background-color: #218838; }
+        .btn.end { background-color: var(--danger); }
+        .btn.end:hover { background-color: #c82333; }
+        
+        .admin-button-container { text-align: center; margin-top: 24px; }
+        .btn.admin { background-color: var(--info); }
+        .btn.admin:hover { background-color: #138496; }
+        
+        .btn.download { background-color: var(--primary); }
+        .btn.download:hover { background-color: #0069d9; }
+        
+        .footer { text-align: center; margin-top: 24px; color: rgba(255, 255, 255, 0.65); font-size: 14px; }
+        
+        /* Estilos de la aplicación de Asistencia adaptados */
+        .clase-info {
             font-size: 1.1em;
-            font-weight: 500;
-        }
-        .alert.success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
-        .alert.error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
-        .admin-container {
-            display: none;
-        }
-        .admin-container h2 {
+            margin-top: 20px;
+            margin-bottom: 0;
+            padding: 12px;
+            border-radius: 8px;
             text-align: center;
         }
-        .table-container {
-            overflow-x: auto;
+        
+        .alert {
+            padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 1em;
+            font-weight: 500; text-align: center;
         }
+        .alert.success { background-color: rgba(40, 167, 69, 0.2); color: #8affb4; border: 1px solid var(--success); }
+        .alert.error { background-color: rgba(220, 53, 69, 0.2); color: #ffb4b4; border: 1px solid var(--danger); }
+        
+        .admin-container {
+            display: none; /* Oculto por defecto */
+            margin-top: 24px;
+        }
+        .table-container { overflow-x: auto; }
+        
         #attendance-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+            width: 100%; border-collapse: collapse; margin-top: 20px;
         }
         #attendance-table th, #attendance-table td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
-            font-size: 0.9em;
+            border: 1px solid var(--border-color);
+            padding: 12px; text-align: left; font-size: 0.9em;
         }
         #attendance-table th {
-            background-color: #e9ecef;
-            color: #495057;
+            background-color: rgba(255, 255, 255, 0.05); color: var(--text-muted);
             font-weight: bold;
         }
-        #attendance-table tr:nth-child(even) { background-color: #f2f2f2; }
-        .download-buttons {
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-        }
-        .clase-info {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-top: 15px;
-            margin-bottom: 15px;
+        #attendance-table tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.02); }
+
+        .download-buttons { margin-top: 20px; margin-bottom: 10px; display: flex; justify-content: center; gap: 15px; }
+
+        @media (max-width: 900px) {
+            .grid { grid-template-columns: 1fr; }
+            .left { order: 2; text-align: center; }
+            .brand { justify-content: center; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1><img src="logo.png" alt="Logo del Instituto" class="logo-img">Instituto Educativo San Carlos</h1>
-        <label for="docente">Nombre del docente:</label>
-        <input type="text" id="docente" placeholder="Ingresa tu nombre completo">
-        
-        <div class="clase-info" id="clase-info" style="display:none;"></div>
+    <div class="wrapper">
+        <div class="grid">
+            <div class="left">
+                <div class="brand">
+                    <div class="logo">
+                        <img src="logo.png" alt="Logo del Instituto" style="height: 100%; width: 100%; object-fit: contain;">
+                    </div>
+                    <div>
+                        <div style="font-weight:700;font-size:18px">Instituto San Carlos</div>
+                        <div style="font-size:13px;color:rgba(255,255,255,0.7)">Plataforma de Asistencia</div>
+                    </div>
+                </div>
+                <h1>Registro de Jornada Docente</h1>
+                <p class="lead">Ingresa tu nombre completo para ver tu clase actual y registrar tu entrada o salida. Tu ubicación será verificada.</p>
+            </div>
 
-        <div class="button-group">
-            <button class="start" onclick="registrarJornada('inicio')">▶️ Inicio de Jornada</button>
-            <button class="end" onclick="registrarJornada('fin')">⏹️ Fin de Jornada</button>
+            <div>
+                <div class="card">
+                    <div style="font-weight:700; font-size: 18px; text-align: center; margin-bottom: 20px;">Registra tu Asistencia</div>
+                    
+                    <div>
+                        <label for="docente">Nombre completo del docente</label>
+                        <input type="text" id="docente" placeholder="Ej. Ana María Ruiz Cabrera">
+                    </div>
+
+                    <div class="clase-info" id="clase-info" style="display:none;"></div>
+                    
+                    <div class="button-group">
+                        <button class="btn start" onclick="registrarJornada('inicio')">▶️ Inicio de Jornada</button>
+                        <button class="btn end" onclick="registrarJornada('fin')">⏹️ Fin de Jornada</button>
+                    </div>
+
+                    <div id="status-message" class="alert" style="display:none;"></div>
+                </div>
+                
+                <div class="admin-button-container">
+                    <button class="btn admin" onclick="toggleAdminPanel()">📋 Ver Registros</button>
+                </div>
+
+            </div>
         </div>
-
-        <div id="status-message" class="alert" style="display:none;"></div>
-
-        <button class="admin" onclick="toggleAdminPanel()">📋 Ver Registros</button>
-
+        
         <div id="admin-container" class="admin-container card">
-            <h2>Panel de Administrador</h2>
+            <h2 style="text-align:center; color: var(--text-light);">Panel de Administrador</h2>
             <div class="download-buttons">
-                <button class="download" onclick="downloadPDF()">📄 Descargar PDF</button>
-                <button class="download" onclick="downloadExcel()">📊 Descargar Excel</button>
+                <button class="btn download" onclick="downloadPDF()">📄 Descargar PDF</button>
+                <button class="btn download" onclick="downloadExcel()">📊 Descargar Excel</button>
             </div>
             <div class="table-container">
                 <table id="attendance-table">
                     <thead>
                         <tr>
-                            <th>Docente</th>
-                            <th>Tipo</th>
-                            <th>Fecha</th>
-                            <th>Día</th>
-                            <th>Hora</th>
-                            <th>Latitud</th>
-                            <th>Longitud</th>
-                            <th>En Zona</th>
-                            <th>Clase</th>
+                            <th>Docente</th> <th>Tipo</th> <th>Fecha</th> <th>Día</th> <th>Hora</th>
+                            <th>Latitud</th> <th>Longitud</th> <th>En Zona</th> <th>Clase</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
         </div>
+
+        <div class="footer">© <span id="y"></span> Instituto Educativo San Carlos</div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
     <script>
-        // Coordenadas de la escuela
+        // --- Toda la lógica de la aplicación de asistencia (pegada aquí) ---
         const SCHOOL_LAT = 19.560137;
         const SCHOOL_LON = -97.238952;
         const MAX_DISTANCE_KM = 0.15;
         const ADMIN_PASSWORD = "IEC25#";
 
-        // --- Horarios y roles (sin cambios) ---
         const horarios = {
             "Coral Alejandra Landa Hernández": {"jueves": "Ciencias Sociales I (09:40-10:30)","viernes": "Ciencias Sociales I (10:30-11:20)","lunes": "Ciencias Sociales I (10:30-11:20) / Ciencias de la Comunicación (08:00-08:50)","martes": "Ciencias de la Comunicación (10:30-11:20)","miércoles": "Ciencias de la Comunicación (08:00-08:50)"},
             "Héctor Vicente Flores González": {"lunes": "Pensamiento Matemático I (10:30-11:20) / Pensamiento Matemático III (08:00-08:50) / Pensamiento Matemático I (12:50-13:30) / Cálculo Diferencial (08:50-09:40) / La Energía en los Procesos de la Vida Diaria (09:40-10:30)","martes": "Pensamiento Matemático I (12:50-13:30) / Pensamiento Matemático III (08:50-09:40) / Temas Selectos de Física (10:30-11:20) / Temas Selectos de Química (08:00-08:50)","miércoles": "Pensamiento Matemático I (13:30-14:20) / Pensamiento Matemático I (12:50-13:30) / Pensamiento Matemático III (12:00-12:50) / Cálculo Diferencial (08:00-08:50) / Temas Selectos de Química (08:50-09:40) / La Energía en los Procesos de la Vida Diaria (10:30-11:20)","jueves": "Pensamiento Matemático I (13:30-14:20) / Pensamiento Matemático III (10:30-11:20) / Pensamiento Matemático III (09:40-10:30) / Temas Selectos de Física (08:50-09:40) / Cálculo Diferencial (08:00-08:50) / La Energía en los Procesos de la Vida Diaria (12:50-13:30)","viernes": "Pensamiento Matemático I (09:40-10:30) / Pensamiento Matemático I (08:00-08:50) / Pensamiento Matemático III (12:50-13:30) / Pensamiento Matemático III (08:00-08:50) / Temas Selectos de Física (12:00-12:50) / Temas Selectos de Química (13:30-14:20) / La Energía en los Procesos de la Vida Diaria (10:30-11:20)"},
@@ -221,9 +231,7 @@
             "Eduardo Yokanán Tejeda Juárez": {"lunes": "Humanidades III (12:00-12:50) / Humanidades III (12:50-13:30) / logica (08:00-08:50) / Temas Selectos de Filosofía I (08:50-09:40)","martes": "Humanidades III (12:00-12:50) / Humanidades III (12:50-13:30) / logica (08:50-09:40) / Sociología (10:30-11:20)","miércoles": "Humanidades III (13:30-14:20) / Humanidades III (12:50-13:30) / Sociología (08:50-09:40) / Temas Selectos de Filosofía I (08:00-08:50)","jueves": "Humanidades III (09:40-10:30) / Humanidades III (10:30-11:20) / Sociología (08:00-08:50)","viernes": "Humanidades III (08:50-09:40) / Humanidades III (12:50-13:30) / logica (08:00-08:50) / Temas Selectos de Filosofía I (12:00-12:50)"},
             "Milagros Ruiz Avilés": {"lunes": "Formación Socioemocional (09:40-10:30) / Psicología (08:50-09:40)","martes": "Formación Socioemocional I (08:00-08:50) / Formación Socioemocional (13:30-14:30)","miércoles": "Orientación Educativa (10:30-11:20) / Formación Socioemocional (12:00-12:50) / Orientación Educativa (08:00-08:50) / Formación Socioemocional (09:40-10:30) / Psicología (08:50-09:40)","jueves": "Formación Socioemocional (12:50-13:30) / Psicología (08:00-08:50)","viernes": "Formación Socioemocional I (08:00-08:50) / Orientación Educativa (12:50-13:30) / Orientación Educativa (12:00-12:50) / Formación Socioemocional (09:40-10:30)"},
         };
-        const specialRoles = {
-            "Leoncio Dionisio Castillo González": "Docente de Jornada Completa", "Suly Morales Reyes": "Docente de Jornada Completa", "Ángel González Alejo": "Docente de Jornada Completa", "Martín Alejandro Rivadeneyra Ferrón": "Subdirector Bachillerato", "Erick David Villegas Martinez": "Coordinador Académico", "Alicia Karina Pineda Bautista": "Subdirectora Secundaría", "Yesika Cecilia Robledo Taboada": "Directora General", "Taimi Sánchez Rodríguez": "Subdirectora Preescolar", "Martha Patricia Ruiz Díaz": "Subdirectora Primaria", "Ana María Ruiz Cabrera": "Coordinadora Inglés"
-        };
+        const specialRoles = {"Leoncio Dionisio Castillo González": "Docente de Jornada Completa", "Suly Morales Reyes": "Docente de Jornada Completa", "Ángel González Alejo": "Docente de Jornada Completa", "Martín Alejandro Rivadeneyra Ferrón": "Subdirector Bachillerato", "Erick David Villegas Martinez": "Coordinador Académico", "Alicia Karina Pineda Bautista": "Subdirectora Secundaría", "Yesika Cecilia Robledo Taboada": "Directora General", "Taimi Sánchez Rodríguez": "Subdirectora Preescolar", "Martha Patricia Ruiz Díaz": "Subdirectora Primaria", "Ana María Ruiz Cabrera": "Coordinadora Inglés"};
 
         const statusMessageDiv = document.getElementById("status-message");
         const adminContainer = document.getElementById("admin-container");
@@ -231,93 +239,57 @@
         const docenteInput = document.getElementById("docente");
         const claseInfoDiv = document.getElementById("clase-info");
 
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCe_gPI05ikktu8gP9hgM9FiMwjQXHvgeo",
-            authDomain: "asistenciaescuela-f9afe.firebaseapp.com",
-            projectId: "asistenciaescuela-f9afe",
-            storageBucket: "asistenciaescuela-f9afe.appspot.com",
-            messagingSenderId: "316634671110",
-            appId: "1:316634671110:web:861136075d0e990c1ffb87"
-        };
-
-        // Initialize Firebase
+        const firebaseConfig = { apiKey: "AIzaSyCe_gPI05ikktu8gP9hgM9FiMwjQXHvgeo", authDomain: "asistenciaescuela-f9afe.firebaseapp.com", projectId: "asistenciaescuela-f9afe", storageBucket: "asistenciaescuela-f9afe.appspot.com", messagingSenderId: "316634671110", appId: "1:316634671110:web:861136075d0e990c1ffb87" };
         const app = firebase.initializeApp(firebaseConfig);
         const db = app.firestore();
+        
+        document.getElementById('y').textContent = new Date().getFullYear();
 
-        /**
-         * ✅ NUEVA FUNCIÓN MEJORADA
-         * Encuentra la clase específica para la hora actual.
-         */
         function findCurrentClass(docente, diaSemana) {
             const currentHour = new Date().getHours();
             const currentMinute = new Date().getMinutes();
             const currentTimeInMinutes = currentHour * 60 + currentMinute;
-
             const teacherSchedule = horarios[docente]?.[diaSemana];
-
-            if (!teacherSchedule) {
-                return undefined; // Devuelve undefined si no hay horario para el día
-            }
-
+            if (!teacherSchedule) { return undefined; }
             const classes = teacherSchedule.split(' / ');
-            
-            // Usa .find() para obtener solo la primera coincidencia
-            const currentClass = classes.find(clase => {
+            return classes.find(clase => {
                 const timePart = clase.match(/\((\d{2}):(\d{2})-(\d{2}):(\d{2})\)/);
                 if (timePart) {
                     const [, startHour, startMinute, endHour, endMinute] = timePart.map(Number);
                     const startTimeInMinutes = startHour * 60 + startMinute;
                     const endTimeInMinutes = endHour * 60 + endMinute;
-
                     return (currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes < endTimeInMinutes);
                 }
                 return false;
             });
-            
-            return currentClass; // Devuelve la clase encontrada o undefined
         }
 
-        /**
-         * ✅ NUEVA FUNCIÓN MEJORADA
-         * Maneja la entrada del nombre del docente con mensajes más claros.
-         */
         function handleDocenteInput() {
             const docente = docenteInput.value.trim();
             claseInfoDiv.style.display = "none";
-            
-            if (docente === "") {
-                return;
-            }
-
+            if (docente === "") { return; }
             const hoy = new Date();
             const diaSemana = hoy.toLocaleDateString("es-ES", { weekday: "long" }).toLowerCase();
-            
             if (horarios[docente]) {
                 const currentClass = findCurrentClass(docente, diaSemana);
                 const teacherScheduleForToday = horarios[docente][diaSemana];
-
                 if (currentClass) {
-                    // Si hay una clase AHORA
-                    claseInfoDiv.innerHTML = `Clase actual: <br><strong>${currentClass}</strong>`;
-                    claseInfoDiv.style.color = "#28a745";
+                    claseInfoDiv.innerHTML = `Clase actual: <br><strong style="color: #fff;">${currentClass}</strong>`;
+                    claseInfoDiv.style.color = "#8affb4";
                 } else if (teacherScheduleForToday) {
-                    // Si NO hay clase ahora, pero SÍ hay un horario para hoy
-                    claseInfoDiv.innerHTML = `No tienes una clase en este momento. <br>Tu horario para hoy es: <strong>${teacherScheduleForToday}</strong>`;
-                    claseInfoDiv.style.color = "#ffc107"; // Un color de advertencia amigable
+                    claseInfoDiv.innerHTML = `No tienes una clase en este momento. <br>Tu horario para hoy es: <strong style="color: #fff;">${teacherScheduleForToday}</strong>`;
+                    claseInfoDiv.style.color = "#ffdf8e";
                 } else {
-                    // Si no tiene clases en todo el día
-                    claseInfoDiv.innerHTML = `<strong>${docente}</strong>, no tienes clases programadas para el día de hoy.`;
-                    claseInfoDiv.style.color = "#dc3545";
+                    claseInfoDiv.innerHTML = `<strong style="color: #fff;">${docente}</strong>, no tienes clases programadas para hoy.`;
+                    claseInfoDiv.style.color = "#ffb4b4";
                 }
-
             } else if (specialRoles[docente]) {
                 const role = specialRoles[docente];
-                claseInfoDiv.innerHTML = `Bienvenido(a), <strong>${docente}</strong>. <br>Rol: <strong>${role}</strong>.`;
-                claseInfoDiv.style.color = "#2c3e50";
+                claseInfoDiv.innerHTML = `Bienvenido(a), <strong style="color: #fff;">${docente}</strong>. <br>Rol: <strong>${role}</strong>.`;
+                claseInfoDiv.style.color = "var(--text-muted)";
             } else {
-                 claseInfoDiv.innerHTML = `No se encontró un horario para <strong>${docente}</strong>. Aún puedes registrar tu asistencia.`;
-                 claseInfoDiv.style.color = "#6c757d";
+                 claseInfoDiv.innerHTML = `No se encontró un horario para <strong style="color: #fff;">${docente}</strong>. Puedes registrar tu asistencia.`;
+                 claseInfoDiv.style.color = "var(--text-muted)";
             }
             claseInfoDiv.style.display = "block";
         }
@@ -339,16 +311,10 @@
             statusMessageDiv.style.display = "block";
         }
 
-        function hideStatusMessage() {
-            statusMessageDiv.style.display = "none";
-        }
-
         async function saveRecord(record) {
             try {
                 await db.collection("asistencia").add(record);
-                console.log("Registro guardado con éxito en Firestore.");
             } catch (error) {
-                console.error("Error al guardar el registro en Firestore:", error);
                 showStatusMessage("Ocurrió un error al guardar tu registro. Inténtalo de nuevo.", "error");
             }
         }
@@ -357,35 +323,22 @@
             db.collection("asistencia").orderBy("hora").onSnapshot(snapshot => {
                 attendanceTableBody.innerHTML = '';
                 const records = snapshot.docs.map(doc => doc.data());
-                
                 if (records.length === 0) {
-                    attendanceTableBody.innerHTML = '<tr><td colspan="9">No hay registros de asistencia aún.</td></tr>';
+                    attendanceTableBody.innerHTML = `<tr><td colspan="9">No hay registros de asistencia aún.</td></tr>`;
                     return;
                 }
-
                 records.forEach(record => {
                     const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${record.docente}</td>
-                        <td>${record.type === 'inicio' ? 'Inicio' : 'Fin'}</td>
-                        <td>${record.fecha || 'N/A'}</td>
-                        <td>${record.diaSemana}</td>
-                        <td>${record.hora}</td>
-                        <td>${record.lat ? record.lat.toFixed(4) : 'N/A'}</td>
-                        <td>${record.lon ? record.lon.toFixed(4) : 'N/A'}</td>
-                        <td>${record.inZone ? '✅ Sí' : '❌ No'}</td>
-                        <td>${record.clase || "N/A"}</td>
-                    `;
+                    row.innerHTML = `<td>${record.docente}</td><td>${record.type === 'inicio' ? 'Inicio' : 'Fin'}</td><td>${record.fecha || 'N/A'}</td><td>${record.diaSemana}</td><td>${record.hora}</td><td>${record.lat ? record.lat.toFixed(4) : 'N/A'}</td><td>${record.lon ? record.lon.toFixed(4) : 'N/A'}</td><td>${record.inZone ? '✅ Sí' : '❌ No'}</td><td>${record.clase || "N/A"}</td>`;
                     attendanceTableBody.appendChild(row);
                 });
-            }, error => {
-                console.error("Error al obtener los registros de Firestore:", error);
-                attendanceTableBody.innerHTML = '<tr><td colspan="9">No se pudieron cargar los registros.</td></tr>';
+            }, () => {
+                attendanceTableBody.innerHTML = `<tr><td colspan="9">No se pudieron cargar los registros.</td></tr>`;
             });
         }
 
         async function registrarJornada(type) {
-            hideStatusMessage();
+            statusMessageDiv.style.display = "none";
             const docente = docenteInput.value.trim();
             if (!docente) {
                 showStatusMessage("Por favor, ingresa tu nombre.", "error");
@@ -396,12 +349,8 @@
             const fecha = hoy.toLocaleDateString("es-ES");
             const diaSemana = hoy.toLocaleDateString("es-ES", { weekday: "long" }).toLowerCase();
             const hora = hoy.toLocaleTimeString();
-
             let claseInfo = findCurrentClass(docente, diaSemana) || "N/A";
-            
-            if (specialRoles[docente]) {
-                claseInfo = specialRoles[docente];
-            }
+            if (specialRoles[docente]) { claseInfo = specialRoles[docente]; }
 
             if (!navigator.geolocation) {
                 showStatusMessage("Tu navegador no soporta geolocalización.", "error");
@@ -410,64 +359,42 @@
 
             try {
                 const position = await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject, {
-                        enableHighAccuracy: true, timeout: 10000, maximumAge: 0
-                    });
+                    navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
                 });
-
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
+                const { latitude: lat, longitude: lon } = position.coords;
                 const distance = calculateDistance(SCHOOL_LAT, SCHOOL_LON, lat, lon);
                 const inZone = distance <= MAX_DISTANCE_KM;
 
                 if (!inZone) {
                     showStatusMessage(`❌ ¡Atención! Estás fuera del área permitida (${distance.toFixed(2)} km de la escuela).`, "error");
                 } else {
-                    const record = {
-                        docente, type, fecha, diaSemana, hora, lat, lon, inZone,
-                        clase: claseInfo 
-                    };
+                    const record = { docente, type, fecha, diaSemana, hora, lat, lon, inZone, clase: claseInfo };
                     await saveRecord(record);
                     showStatusMessage(`✅ Registro de ${type === 'inicio' ? 'INICIO' : 'FIN'} de jornada exitoso para ${docente}.`, "success");
                 }
             } catch (error) {
-                console.error("Error al obtener la ubicación:", error);
-                if (error.code === 1) {
-                    showStatusMessage("🚨 Permiso de ubicación denegado. Habilita la ubicación en tu navegador.", "error");
-                } else if (error.code === 2) {
-                    showStatusMessage("⚠️ La información de ubicación no está disponible.", "error");
-                } else if (error.code === 3) {
-                    showStatusMessage("⌛ Tiempo de espera agotado al obtener la ubicación.", "error");
-                } else {
-                    showStatusMessage("🚫 No se pudo obtener la ubicación.", "error");
-                }
+                let msg = "🚫 No se pudo obtener la ubicación.";
+                if (error.code === 1) msg = "🚨 Permiso de ubicación denegado. Habilita la ubicación en tu navegador.";
+                else if (error.code === 2) msg = "⚠️ La información de ubicación no está disponible.";
+                else if (error.code === 3) msg = "⌛ Tiempo de espera agotado al obtener la ubicación.";
+                showStatusMessage(msg, "error");
             }
         }
 
         function toggleAdminPanel() {
             const password = prompt("Por favor, ingresa la contraseña de administrador:");
-            
             if (password === ADMIN_PASSWORD) {
-                if (adminContainer.style.display === "block") {
-                    adminContainer.style.display = "none";
-                } else {
-                    adminContainer.style.display = "block";
-                    displayRecordsInTable();
-                }
-            } else {
+                const isDisplayed = adminContainer.style.display === "block";
+                adminContainer.style.display = isDisplayed ? "none" : "block";
+                if (!isDisplayed) { displayRecordsInTable(); }
+            } else if (password) {
                 alert("Contraseña incorrecta. Acceso denegado.");
             }
         }
 
         function downloadPDF() {
             const element = document.getElementById('attendance-table');
-            const opt = {
-                margin:       0.5,
-                filename:     'registro_asistencia.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
-            };
+            const opt = { margin: 0.5, filename: 'registro_asistencia.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' } };
             html2pdf().from(element).set(opt).save();
         }
 
@@ -479,9 +406,7 @@
             XLSX.writeFile(wb, "registros_asistencia.xlsx");
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            displayRecordsInTable();
-        });
+        document.addEventListener('DOMContentLoaded', displayRecordsInTable);
     </script>
 </body>
 </html>
