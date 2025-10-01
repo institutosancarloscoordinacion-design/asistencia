@@ -24,7 +24,7 @@
             --danger: #dc3545;
             --info: #17a2b8;
             --primary: #007bff;
-            /* Nuevos colores para el reporte */
+            /* Estilos para el reporte consolidado */
             --color-success-bg: rgba(40, 167, 69, 0.1);
             --color-danger-bg: rgba(220, 53, 69, 0.1);
             --color-info-bg: rgba(23, 162, 184, 0.1);
@@ -47,8 +47,8 @@
         .grid { display: grid; grid-template-columns: 1fr 420px; gap: 48px; align-items: center; }
         .left { color: rgba(255, 255, 255, 0.95); }
         .brand { display: flex; gap: 16px; align-items: center; }
-        .logo { width: 64px; height: 64px; border-radius: 12px; background:#000; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 20px; overflow: hidden;}
-        .logo img { height: 100%; width: 100%; object-fit: contain; }
+        .logo { width: 64px; height: 64px; border-radius: 12px; background:#000; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 20px; overflow: hidden;} 
+        .logo img { height: 100%; width: 100%; object-fit: contain; } 
         h1 { font-size: 28px; margin: 16px 0; }
         p.lead { color: rgba(255, 255, 255, 0.8); line-height: 1.6; }
 
@@ -118,7 +118,7 @@
         }
         .alert.success { background-color: rgba(40, 167, 69, 0.2); color: #8affb4; border: 1px solid var(--success); }
         .alert.error { background-color: rgba(220, 53, 69, 0.2); color: #ffb4b4; border: 1px solid var(--danger); }
-        .alert.info { background-color: rgba(23, 162, 184, 0.2); color: #8ecfff; border: 1px solid var(--info); }
+        .alert.info { background-color: rgba(23, 162, 184, 0.2); color: #8ecfff; border: 1px solid var(--info); }
         
         .admin-container {
             display: none; /* Oculto por defecto */
@@ -138,7 +138,7 @@
             font-weight: bold;
         }
         #attendance-table tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.02); }
-
+        
         /* Estilos para el nuevo reporte consolidado */
         #attendance-table .success { color: var(--success); }
         #attendance-table .danger { color: var(--danger); }
@@ -146,7 +146,6 @@
         #attendance-table tr[style*="background-color: var(--color-success-bg)"] { background-color: var(--color-success-bg); }
         #attendance-table tr[style*="background-color: var(--color-danger-bg)"] { background-color: var(--color-danger-bg); }
         #attendance-table tr[style*="background-color: var(--color-info-bg)"] { background-color: var(--color-info-bg); }
-
 
         .download-buttons { margin-top: 20px; margin-bottom: 10px; display: flex; justify-content: center; gap: 15px; }
 
@@ -227,16 +226,15 @@
     </div>
 
     <script>
-        // -----------------------------------------------------------
-        // CONSTANTES
-        // -----------------------------------------------------------
+        // -----------------------------------------------------------
+        // CONSTANTES Y HORARIOS (ACTUALIZADOS)
+        // -----------------------------------------------------------
         const SCHOOL_LAT = 19.560137;
         const SCHOOL_LON = -97.238952;
         const MAX_DISTANCE_KM = 0.15;
         const ADMIN_PASSWORD = "IEC25#";
         const MAX_DELAY_MINUTES = 10; 
         
-        // CONSTANTES para auto-finalización de roles especiales (Jornada 7:40 - 15:40)
         const ADMIN_START_TIME = "07:40:00";
         const ADMIN_END_TIME = "15:40:00";
         const ADMIN_END_TIME_MINUTES = 15 * 60 + 40; 
@@ -320,7 +318,7 @@
             });
             return classToValidate;
         }
-        
+
         function findNextClass(docente, diaSemana) {
             const currentHour = new Date().getHours();
             const currentMinute = new Date().getMinutes();
@@ -362,7 +360,7 @@
                 showStatusMessage("Ocurrió un error al guardar tu registro. Inténtalo de nuevo.", "error");
             }
         }
-
+        
         // -----------------------------------------------------------
         // LÓGICA DE AUTO-FINALIZACIÓN
         // -----------------------------------------------------------
@@ -437,7 +435,7 @@
             }
             return null;
         }
-        
+
         // -----------------------------------------------------------
         // LÓGICA DE REGISTRO
         // -----------------------------------------------------------
@@ -542,7 +540,7 @@
 
         function displayRecordsInTable() {
             const tableHeader = document.querySelector("#attendance-table thead tr");
-            // 💡 Asegura que el encabezado sea el correcto para el reporte consolidado
+            // Se actualiza el encabezado de la tabla para el reporte consolidado
             tableHeader.innerHTML = `
                 <th>Docente</th>
                 <th>Fecha</th>
@@ -568,7 +566,7 @@
                             registros: []
                         };
                     }
-                    // Parsear el timestamp de Firebase si existe, si no usar la hora guardada
+                    // Obtener la hora de display (del timestamp)
                     let horaDisplay = record.hora;
                     if (record.timestamp && record.timestamp.toDate) {
                          const date = record.timestamp.toDate();
@@ -604,13 +602,13 @@
                             const tieneFin = report.fines.some(r => r.clase === scheduledClasses[0]);
 
                             if (tieneInicio && tieneFin) {
-                                cumplimiento = `Jornada Completa (${scheduledClasses[0]})`;
+                                cumplimiento = `Jornada Completa`;
                                 colorClass = "success";
                             } else if (tieneInicio && !tieneFin) {
                                 cumplimiento = `Jornada Abierta (Falta fin)`;
                                 colorClass = "info";
                             } else {
-                                cumplimiento = `Jornada No Iniciada`;
+                                cumplimiento = `❌ Jornada No Iniciada`;
                                 colorClass = "danger";
                             }
                         } else {
@@ -618,10 +616,8 @@
                             const scheduledClassNames = scheduledClasses.map(c => c.split('(')[0].trim());
                             const registeredClassNames = report.inicios.map(r => r.clase.split('(')[0].trim());
                             
-                            // Conjunto de clases programadas únicas
                             const uniqueScheduledClasses = [...new Set(scheduledClassNames)];
                             
-                            // Faltantes: Clases programadas que NO tienen un registro de inicio
                             const faltantes = uniqueScheduledClasses.filter(name => !registeredClassNames.includes(name));
                             
                             if (faltantes.length === 0 && uniqueScheduledClasses.length > 0) {
@@ -657,7 +653,7 @@
                         <td class="${colorClass}">${cumplimiento}</td>
                     `;
                     
-                    // Aplicar estilo de color para el cumplimiento
+                    // Aplicar estilo de color de fondo
                     if (colorClass === "success") {
                         row.style.backgroundColor = "var(--color-success-bg)";
                     } else if (colorClass === "danger") {
