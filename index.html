@@ -133,13 +133,12 @@
             background-color: rgba(255, 255, 255, 0.05); color: var(--text-muted);
             font-weight: bold;
         }
-        /* MANTENIENDO ESTÉTICA ORIGINAL: Alternancia de filas */
         #attendance-table tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.02); }
 
         /* Estilos para el texto del reporte consolidado */
-        #attendance-table .success { color: var(--success); }
-        #attendance-table .danger { color: var(--danger); }
-        #attendance-table .info { color: var(--info); }
+        #attendance-table .success { color: var(--success); font-weight: 600; }
+        #attendance-table .danger { color: var(--danger); font-weight: 600; }
+        #attendance-table .info { color: var(--info); font-weight: 600; }
 
         .download-buttons { margin-top: 20px; margin-bottom: 10px; display: flex; justify-content: center; gap: 15px; }
 
@@ -584,11 +583,11 @@
                     return;
                 }
 
-                let rowIndex = 0; // Para el estilo de alternancia
+                let rowIndex = 0;
                 consolidatedReports.forEach(report => {
                     const scheduledClasses = getScheduledClasses(report.docente, report.diaSemana);
                     let cumplimiento = "N/A (Sin Horario)";
-                    let colorClass = "text-muted";
+                    let colorClass = "text-muted"; // Default text color
                     
                     // 2. Determinar el estado de cumplimiento
                     if (scheduledClasses.length > 0) {
@@ -642,7 +641,7 @@
 
                     const row = document.createElement('tr');
                     
-                    // Lógica para mantener la alternancia de filas original
+                    // Aplicar la raya alterna de fondo según el índice (estética original)
                     if (rowIndex % 2 !== 0) {
                        row.style.backgroundColor = "rgba(255, 255, 255, 0.02)";
                     }
@@ -660,8 +659,8 @@
                     attendanceTableBody.appendChild(row);
                 });
             }).catch(error => {
-                // Si el error es de permisos o conexión, lo mostramos
-                attendanceTableBody.innerHTML = `<tr><td colspan="6">Error al cargar registros: ${error.message}. Verifica tu conexión o permisos de Firebase.</td></tr>`;
+                // Mensaje de error para el usuario
+                attendanceTableBody.innerHTML = `<tr><td colspan="6">Error al cargar registros: ${error.message}. Verifica tu conexión a internet o la configuración de Firebase.</td></tr>`;
             });
         }
 
