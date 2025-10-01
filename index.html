@@ -24,10 +24,6 @@
             --danger: #dc3545;
             --info: #17a2b8;
             --primary: #007bff;
-            /* Estilos para el reporte consolidado (mantenemos los colores) */
-            --color-success-bg: rgba(40, 167, 69, 0.1);
-            --color-danger-bg: rgba(220, 53, 69, 0.1);
-            --color-info-bg: rgba(23, 162, 184, 0.1);
         }
 
         * { box-sizing: border-box; }
@@ -137,15 +133,13 @@
             background-color: rgba(255, 255, 255, 0.05); color: var(--text-muted);
             font-weight: bold;
         }
+        /* MANTENIENDO ESTÉTICA ORIGINAL: Alternancia de filas */
         #attendance-table tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.02); }
 
-        /* Estilos para las celdas de cumplimiento en el reporte consolidado */
+        /* Estilos para el texto del reporte consolidado */
         #attendance-table .success { color: var(--success); }
         #attendance-table .danger { color: var(--danger); }
         #attendance-table .info { color: var(--info); }
-        #attendance-table tr[data-color='success'] { background-color: var(--color-success-bg); }
-        #attendance-table tr[data-color='danger'] { background-color: var(--color-danger-bg); }
-        #attendance-table tr[data-color='info'] { background-color: var(--color-info-bg); }
 
         .download-buttons { margin-top: 20px; margin-bottom: 10px; display: flex; justify-content: center; gap: 15px; }
 
@@ -571,6 +565,7 @@
                     let horaDisplay = record.hora;
                     if (record.timestamp && record.timestamp.toDate) {
                          const date = record.timestamp.toDate();
+                         // Usar el formato de la hora guardada o del timestamp
                          horaDisplay = date.toLocaleTimeString("es-ES", {hour: '2-digit', minute:'2-digit', second: '2-digit'});
                     }
                     record.horaDisplay = horaDisplay;
@@ -589,6 +584,7 @@
                     return;
                 }
 
+                let rowIndex = 0; // Para el estilo de alternancia
                 consolidatedReports.forEach(report => {
                     const scheduledClasses = getScheduledClasses(report.docente, report.diaSemana);
                     let cumplimiento = "N/A (Sin Horario)";
@@ -645,8 +641,13 @@
                         .join('<br>');
 
                     const row = document.createElement('tr');
-                    // Usamos un atributo de datos para el color de fondo y mantenemos la clase para el texto
-                    row.setAttribute('data-color', colorClass);
+                    
+                    // Lógica para mantener la alternancia de filas original
+                    if (rowIndex % 2 !== 0) {
+                       row.style.backgroundColor = "rgba(255, 255, 255, 0.02)";
+                    }
+                    rowIndex++;
+                    
                     row.innerHTML = `
                         <td>${report.docente}</td>
                         <td>${report.fecha}</td>
@@ -659,7 +660,8 @@
                     attendanceTableBody.appendChild(row);
                 });
             }).catch(error => {
-                attendanceTableBody.innerHTML = `<tr><td colspan="6">Error al cargar registros: ${error.message}</td></tr>`;
+                // Si el error es de permisos o conexión, lo mostramos
+                attendanceTableBody.innerHTML = `<tr><td colspan="6">Error al cargar registros: ${error.message}. Verifica tu conexión o permisos de Firebase.</td></tr>`;
             });
         }
 
