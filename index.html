@@ -24,7 +24,7 @@
             --danger: #dc3545;
             --info: #17a2b8;
             --primary: #007bff;
-            /* Estilos para el reporte consolidado */
+            /* Estilos para el reporte consolidado (mantenemos los colores) */
             --color-success-bg: rgba(40, 167, 69, 0.1);
             --color-danger-bg: rgba(220, 53, 69, 0.1);
             --color-info-bg: rgba(23, 162, 184, 0.1);
@@ -138,14 +138,14 @@
             font-weight: bold;
         }
         #attendance-table tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.02); }
-        
-        /* Estilos para el nuevo reporte consolidado */
+
+        /* Estilos para las celdas de cumplimiento en el reporte consolidado */
         #attendance-table .success { color: var(--success); }
         #attendance-table .danger { color: var(--danger); }
         #attendance-table .info { color: var(--info); }
-        #attendance-table tr[style*="background-color: var(--color-success-bg)"] { background-color: var(--color-success-bg); }
-        #attendance-table tr[style*="background-color: var(--color-danger-bg)"] { background-color: var(--color-danger-bg); }
-        #attendance-table tr[style*="background-color: var(--color-info-bg)"] { background-color: var(--color-info-bg); }
+        #attendance-table tr[data-color='success'] { background-color: var(--color-success-bg); }
+        #attendance-table tr[data-color='danger'] { background-color: var(--color-danger-bg); }
+        #attendance-table tr[data-color='info'] { background-color: var(--color-info-bg); }
 
         .download-buttons { margin-top: 20px; margin-bottom: 10px; display: flex; justify-content: center; gap: 15px; }
 
@@ -239,6 +239,7 @@
         const ADMIN_END_TIME = "15:40:00";
         const ADMIN_END_TIME_MINUTES = 15 * 60 + 40; 
 
+        // Horarios actualizados: 12:50-13:40 y 13:40-14:30
         const horarios = {
             "Coral Alejandra Landa Hernández": {"jueves": "Ciencias Sociales I (09:40-10:30)","viernes": "Ciencias Sociales I (10:30-11:20)","lunes": "Ciencias Sociales I (10:30-11:20) / Ciencias de la Comunicación (08:00-08:50)","martes": "Ciencias de la Comunicación (10:30-11:20)","miércoles": "Ciencias de la Comunicación (08:00-08:50)"},
             "Héctor Vicente Flores González": {"lunes": "Pensamiento Matemático I (10:30-11:20) / Pensamiento Matemático III (08:00-08:50) / Pensamiento Matemático I (12:50-13:40) / Cálculo Diferencial (08:50-09:40) / La Energía en los Procesos de la Vida Diaria (09:40-10:30)","martes": "Pensamiento Matemático I (12:50-13:40) / Pensamiento Matemático III (08:50-09:40) / Temas Selectos de Física (10:30-11:20) / Temas Selectos de Química (08:00-08:50)","miércoles": "Pensamiento Matemático I (13:40-14:30) / Pensamiento Matemático I (12:50-13:40) / Pensamiento Matemático III (12:00-12:50) / Cálculo Diferencial (08:00-08:50) / Temas Selectos de Química (08:50-09:40) / La Energía en los Procesos de la Vida Diaria (10:30-11:20)","jueves": "Pensamiento Matemático I (13:40-14:30) / Pensamiento Matemático III (10:30-11:20) / Pensamiento Matemático III (09:40-10:30) / Temas Selectos de Física (08:50-09:40) / Cálculo Diferencial (08:00-08:50) / La Energía en los Procesos de la Vida Diaria (12:50-13:40)","viernes": "Pensamiento Matemático I (09:40-10:30) / Pensamiento Matemático I (08:00-08:50) / Pensamiento Matemático III (12:50-13:40) / Pensamiento Matemático III (08:00-08:50) / Temas Selectos de Física (12:00-12:50) / Temas Selectos de Química (13:40-14:30) / La Energía en los Procesos de la Vida Diaria (10:30-11:20)"},
@@ -524,7 +525,7 @@
         }
 
         // -----------------------------------------------------------
-        // FUNCIÓN DE REPORTE CONSOLIDADO (NUEVA ESTRUCTURA)
+        // FUNCIÓN DE REPORTE CONSOLIDADO
         // -----------------------------------------------------------
 
         function getScheduledClasses(docente, diaSemana) {
@@ -644,6 +645,8 @@
                         .join('<br>');
 
                     const row = document.createElement('tr');
+                    // Usamos un atributo de datos para el color de fondo y mantenemos la clase para el texto
+                    row.setAttribute('data-color', colorClass);
                     row.innerHTML = `
                         <td>${report.docente}</td>
                         <td>${report.fecha}</td>
@@ -652,15 +655,6 @@
                         <td>${allFines || 'N/A'}</td>
                         <td class="${colorClass}">${cumplimiento}</td>
                     `;
-                    
-                    // Aplicar estilo de color de fondo
-                    if (colorClass === "success") {
-                        row.style.backgroundColor = "var(--color-success-bg)";
-                    } else if (colorClass === "danger") {
-                        row.style.backgroundColor = "var(--color-danger-bg)";
-                    } else if (colorClass === "info") {
-                        row.style.backgroundColor = "var(--color-info-bg)";
-                    }
                     
                     attendanceTableBody.appendChild(row);
                 });
@@ -702,11 +696,10 @@
                     
                     if (nextClass) {
                         claseInfoDiv.innerHTML = `No estás en clase. <br>Tu **próxima clase** es: <strong style="color: #fff;">${nextClass}</strong>`;
-                        claseInfoDiv.style.color = "#ffdf8e";
                     } else {
                         claseInfoDiv.innerHTML = `Ya has completado tu horario. <br>Tu horario para hoy fue: <strong style="color: #fff;">${teacherScheduleForToday}</strong>`;
-                        claseInfoDiv.style.color = "#ffdf8e";
                     }
+                    claseInfoDiv.style.color = "#ffdf8e";
                 } else {
                     claseInfoDiv.innerHTML = `<strong style="color: #fff;">${docente}</strong>, no tienes clases programadas para hoy.`;
                     claseInfoDiv.style.color = "#ffb4b4";
