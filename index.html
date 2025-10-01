@@ -140,7 +140,7 @@
         #attendance-table .danger { color: var(--danger); font-weight: 600; }
         #attendance-table .info { color: var(--info); font-weight: 600; }
 
-        .download-buttons { margin-top: 20px; margin-bottom: 10px; display: flex; justify-content: center; gap: 15px; }
+        .download-buttons { display: flex; justify-content: center; gap: 15px; margin-top: 20px; margin-bottom: 10px; }
 
         @media (max-width: 900px) {
             .grid { grid-template-columns: 1fr; }
@@ -159,7 +159,6 @@
                     </div>
                     <div>
                         <div style="font-weight:700;font-size:18px">Instituto San Carlos</div>
-                        <div style="font-size:13px;color:rgba(255,255,255,0.7)">Plataforma de Asistencia</div>
                     </div>
                 </div>
                 <h1>Registro de Jornada Docente</h1>
@@ -322,7 +321,7 @@
 
             const classes = teacherSchedule.split(' / ');
             let nextClass = null;
-            let minStartTime = Infinity;
+    11:28:09 AM CST            let minStartTime = Infinity;
 
             classes.forEach(clase => {
                 const timePart = clase.match(/\((\d{2}):(\d{2})-(\d{2}):(\d{2})\)/);
@@ -532,135 +531,142 @@
         }
 
         function displayRecordsInTable() {
-            const tableHeader = document.querySelector("#attendance-table thead tr");
-            // Se actualiza el encabezado de la tabla para el reporte consolidado
-            tableHeader.innerHTML = `
-                <th>Docente</th>
-                <th>Fecha</th>
-                <th>Día</th>
-                <th>Registro Entrada (Hora/Clase)</th>
-                <th>Registro Salida (Hora/Clase)</th>
-                <th>Estado de Cumplimiento</th>
-            `;
+            try {
+                const tableHeader = document.querySelector("#attendance-table thead tr");
+                // Se actualiza el encabezado de la tabla para el reporte consolidado
+                tableHeader.innerHTML = `
+                    <th>Docente</th>
+                    <th>Fecha</th>
+                    <th>Día</th>
+                    <th>Registro Entrada (Hora/Clase)</th>
+                    <th>Registro Salida (Hora/Clase)</th>
+                    <th>Estado de Cumplimiento</th>
+                `;
 
-            db.collection("asistencia").orderBy("timestamp", "asc").get().then(snapshot => {
-                attendanceTableBody.innerHTML = '';
-                
-                // 1. Agrupar registros por Docente y Fecha
-                const groupedRecords = snapshot.docs.map(doc => doc.data()).reduce((acc, record) => {
-                    const key = `${record.docente}|${record.fecha}`;
-                    if (!acc[key]) {
-                        acc[key] = {
-                            docente: record.docente,
-                            fecha: record.fecha,
-                            diaSemana: record.diaSemana,
-                            inicios: [],
-                            fines: [],
-                            registros: []
-                        };
-                    }
-                    // Obtener la hora de display (del timestamp)
-                    let horaDisplay = record.hora;
-                    if (record.timestamp && record.timestamp.toDate) {
-                         const date = record.timestamp.toDate();
-                         // Usar el formato de la hora guardada o del timestamp
-                         horaDisplay = date.toLocaleTimeString("es-ES", {hour: '2-digit', minute:'2-digit', second: '2-digit'});
-                    }
-                    record.horaDisplay = horaDisplay;
-
-                    acc[key].registros.push(record);
-                    if (record.type === 'inicio') acc[key].inicios.push(record);
-                    if (record.type === 'fin') acc[key].fines.push(record);
-                    return acc;
-                }, {});
-
-                // Invertir para ver el más reciente primero
-                const consolidatedReports = Object.values(groupedRecords).reverse(); 
-
-                if (consolidatedReports.length === 0) {
-                    attendanceTableBody.innerHTML = `<tr><td colspan="6">No hay registros de asistencia aún.</td></tr>`;
-                    return;
-                }
-
-                let rowIndex = 0;
-                consolidatedReports.forEach(report => {
-                    const scheduledClasses = getScheduledClasses(report.docente, report.diaSemana);
-                    let cumplimiento = "N/A (Sin Horario)";
-                    let colorClass = "text-muted"; // Default text color
+                db.collection("asistencia").orderBy("timestamp", "asc").get().then(snapshot => {
+                    attendanceTableBody.innerHTML = '';
                     
-                    // 2. Determinar el estado de cumplimiento
-                    if (scheduledClasses.length > 0) {
-                        const isSpecialRole = scheduledClasses[0].includes("Jornada Completa") || scheduledClasses[0].includes("Director") || scheduledClasses[0].includes("Subdirector") || scheduledClasses[0].includes("Coordinador");
-                        
-                        if (isSpecialRole) {
-                            const tieneInicio = report.inicios.some(r => r.clase === scheduledClasses[0]);
-                            const tieneFin = report.fines.some(r => r.clase === scheduledClasses[0]);
+                    // 1. Agrupar registros por Docente y Fecha
+                    const groupedRecords = snapshot.docs.map(doc => doc.data()).reduce((acc, record) => {
+                        const key = `${record.docente}|${record.fecha}`;
+                        if (!acc[key]) {
+                            acc[key] = {
+                                docente: record.docente,
+                                fecha: record.fecha,
+                                diaSemana: record.diaSemana,
+                                inicios: [],
+                                fines: [],
+                                registros: []
+                            };
+                        }
+                        // Obtener la hora de display (del timestamp)
+                        let horaDisplay = record.hora;
+                        if (record.timestamp && record.timestamp.toDate) {
+                             const date = record.timestamp.toDate();
+                             // Usar el formato de la hora guardada o del timestamp
+                             horaDisplay = date.toLocaleTimeString("es-ES", {hour: '2-digit', minute:'2-digit', second: '2-digit'});
+                        }
+                        record.horaDisplay = horaDisplay;
 
-                            if (tieneInicio && tieneFin) {
-                                cumplimiento = `Jornada Completa`;
-                                colorClass = "success";
-                            } else if (tieneInicio && !tieneFin) {
-                                cumplimiento = `Jornada Abierta (Falta fin)`;
-                                colorClass = "info";
+                        acc[key].registros.push(record);
+                        if (record.type === 'inicio') acc[key].inicios.push(record);
+                        if (record.type === 'fin') acc[key].fines.push(record);
+                        return acc;
+                    }, {});
+
+                    // Invertir para ver el más reciente primero
+                    const consolidatedReports = Object.values(groupedRecords).reverse(); 
+
+                    if (consolidatedReports.length === 0) {
+                        attendanceTableBody.innerHTML = `<tr><td colspan="6">No hay registros de asistencia aún.</td></tr>`;
+                        return;
+                    }
+
+                    let rowIndex = 0;
+                    consolidatedReports.forEach(report => {
+                        const scheduledClasses = getScheduledClasses(report.docente, report.diaSemana);
+                        let cumplimiento = "N/A (Sin Horario)";
+                        let colorClass = "text-muted"; // Default text color
+                        
+                        // 2. Determinar el estado de cumplimiento
+                        if (scheduledClasses.length > 0) {
+                            const isSpecialRole = scheduledClasses[0].includes("Jornada Completa") || scheduledClasses[0].includes("Director") || scheduledClasses[0].includes("Subdirector") || scheduledClasses[0].includes("Coordinador");
+                            
+                            if (isSpecialRole) {
+                                const tieneInicio = report.inicios.some(r => r.clase === scheduledClasses[0]);
+                                const tieneFin = report.fines.some(r => r.clase === scheduledClasses[0]);
+
+                                if (tieneInicio && tieneFin) {
+                                    cumplimiento = `Jornada Completa`;
+                                    colorClass = "success";
+                                } else if (tieneInicio && !tieneFin) {
+                                    cumplimiento = `Jornada Abierta (Falta fin)`;
+                                    colorClass = "info";
+                                } else {
+                                    cumplimiento = `❌ Jornada No Iniciada`;
+                                    colorClass = "danger";
+                                }
                             } else {
-                                cumplimiento = `❌ Jornada No Iniciada`;
-                                colorClass = "danger";
-                            }
-                        } else {
-                            // Docentes por clase: Contar cuántas clases se registraron
-                            const scheduledClassNames = scheduledClasses.map(c => c.split('(')[0].trim());
-                            const registeredClassNames = report.inicios.map(r => r.clase.split('(')[0].trim());
-                            
-                            const uniqueScheduledClasses = [...new Set(scheduledClassNames)];
-                            
-                            const faltantes = uniqueScheduledClasses.filter(name => !registeredClassNames.includes(name));
-                            
-                            if (faltantes.length === 0 && uniqueScheduledClasses.length > 0) {
-                                cumplimiento = "✅ Horario Completo";
-                                colorClass = "success";
-                            } else if (faltantes.length > 0 && faltantes.length < uniqueScheduledClasses.length) {
-                                cumplimiento = `⚠️ Clases incompletas: ${faltantes.join(', ')}`;
-                                colorClass = "info";
-                            }
-                            else if (faltantes.length === uniqueScheduledClasses.length) {
-                                cumplimiento = `❌ No se registró ninguna clase.`;
-                                colorClass = "danger";
+                                // Docentes por clase: Contar cuántas clases se registraron
+                                const scheduledClassNames = scheduledClasses.map(c => c.split('(')[0].trim());
+                                const registeredClassNames = report.inicios.map(r => r.clase.split('(')[0].trim());
+                                
+                                const uniqueScheduledClasses = [...new Set(scheduledClassNames)];
+                                
+                                const faltantes = uniqueScheduledClasses.filter(name => !registeredClassNames.includes(name));
+                                
+                                if (faltantes.length === 0 && uniqueScheduledClasses.length > 0) {
+                                    cumplimiento = "✅ Horario Completo";
+                                    colorClass = "success";
+                                } else if (faltantes.length > 0 && faltantes.length < uniqueScheduledClasses.length) {
+                                    cumplimiento = `⚠️ Clases incompletas: ${faltantes.join(', ')}`;
+                                    colorClass = "info";
+                                }
+                                else if (faltantes.length === uniqueScheduledClasses.length) {
+                                    cumplimiento = `❌ No se registró ninguna clase.`;
+                                    colorClass = "danger";
+                                }
                             }
                         }
-                    }
 
-                    // 3. Consolidar registros de Entrada y Salida para la tabla
-                    const allInicios = report.inicios
-                        .map(r => `${r.horaDisplay} (${r.clase.split('(')[0].trim()})`)
-                        .join('<br>');
-                    
-                    const allFines = report.fines
-                        .map(r => `${r.horaDisplay} (${r.clase.split('(')[0].trim()})`)
-                        .join('<br>');
+                        // 3. Consolidar registros de Entrada y Salida para la tabla
+                        const allInicios = report.inicios
+                            .map(r => `${r.horaDisplay} (${r.clase.split('(')[0].trim()})`)
+                            .join('<br>');
+                        
+                        const allFines = report.fines
+                            .map(r => `${r.horaDisplay} (${r.clase.split('(')[0].trim()})`)
+                            .join('<br>');
 
-                    const row = document.createElement('tr');
-                    
-                    // Aplicar la raya alterna de fondo según el índice (estética original)
-                    if (rowIndex % 2 !== 0) {
-                       row.style.backgroundColor = "rgba(255, 255, 255, 0.02)";
-                    }
-                    rowIndex++;
-                    
-                    row.innerHTML = `
-                        <td>${report.docente}</td>
-                        <td>${report.fecha}</td>
-                        <td>${report.diaSemana}</td>
-                        <td>${allInicios || 'N/A'}</td>
-                        <td>${allFines || 'N/A'}</td>
-                        <td class="${colorClass}">${cumplimiento}</td>
-                    `;
-                    
-                    attendanceTableBody.appendChild(row);
+                        const row = document.createElement('tr');
+                        
+                        // Aplicar la raya alterna de fondo según el índice (estética original)
+                        if (rowIndex % 2 !== 0) {
+                           row.style.backgroundColor = "rgba(255, 255, 255, 0.02)";
+                        }
+                        rowIndex++;
+                        
+                        row.innerHTML = `
+                            <td>${report.docente}</td>
+                            <td>${report.fecha}</td>
+                            <td>${report.diaSemana}</td>
+                            <td>${allInicios || 'N/A'}</td>
+                            <td>${allFines || 'N/A'}</td>
+                            <td class="${colorClass}">${cumplimiento}</td>
+                        `;
+                        
+                        attendanceTableBody.appendChild(row);
+                    });
+                }).catch(error => {
+                    // Mensaje de error visible en la tabla
+                    attendanceTableBody.innerHTML = `<tr><td colspan="6" class="danger">ERROR: No se pudieron cargar los registros. Detalles: ${error.message}</td></tr>`;
+                    console.error("Error al cargar y procesar datos del reporte consolidado:", error);
                 });
-            }).catch(error => {
-                // Mensaje de error para el usuario
-                attendanceTableBody.innerHTML = `<tr><td colspan="6">Error al cargar registros: ${error.message}. Verifica tu conexión a internet o la configuración de Firebase.</td></tr>`;
-            });
+            } catch (error) {
+                // Mensaje de error general en caso de fallo crítico
+                attendanceTableBody.innerHTML = `<tr><td colspan="6" class="danger">ERROR CRÍTICO: Fallo al inicializar el reporte. Verifica la consola (F12).</td></tr>`;
+                console.error("Error CRÍTICO en displayRecordsInTable:", error);
+            }
         }
 
         // -----------------------------------------------------------
